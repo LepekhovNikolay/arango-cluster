@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  arango-agency1:
+    container_name: arango-agency1
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    ports:
+      - "8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    command: arangod --server.endpoint tcp://0.0.0.0:8529 --agency.my-address=tcp://arango-agency1:8529 --server.authentication false --agency.activate true --agency.size 3 --agency.supervision true
+  
+  arango-agency2:
+    container_name: arango-agency2
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    depends_on:
+      - arango-agency1
+    ports:
+      - "8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    command: arangod --server.endpoint tcp://0.0.0.0:8529 --agency.my-address=tcp://arango-agency2:8529 --server.authentication false --agency.activate true --agency.size 3 --agency.supervision true
+ 
+  arango-agency3:
+    container_name: arango-agency3
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    depends_on:
+      - arango-agency2
+    ports:
+      - "8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    command: arangod --server.endpoint tcp://0.0.0.0:8529 --agency.my-address=tcp://arango-agency3:8529 --server.authentication false --agency.activate true --agency.size 3 --agency.supervision true --agency.endpoint tcp://arango-agency1:8529 --agency.endpoint tcp://arango-agency2:8529 --agency.endpoint tcp://arango-agency3:8529
+    
+  
+  
+  arango-server1:
+    container_name: arango-server1
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    depends_on:
+      - arango-agency3
+    ports:
+      - "8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    command: arangod --server.authentication=false --server.endpoint tcp://0.0.0.0:8529 --cluster.my-address tcp://arango-server1:8529 --cluster.my-local-info db1 --cluster.my-role PRIMARY --cluster.agency-endpoint tcp://arango-agency1:8529 --cluster.agency-endpoint tcp://arango-agency2:8529 --cluster.agency-endpoint tcp://arango-agency3:8529
+  
+  arango-server2:
+    container_name: arango-server2
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    depends_on:
+      - arango-agency3
+    ports:
+      - "8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    command: arangod --server.authentication=false --server.endpoint tcp://0.0.0.0:8529 --cluster.my-address tcp://arango-server2:8529 --cluster.my-local-info db1 --cluster.my-role PRIMARY --cluster.agency-endpoint tcp://arango-agency1:8529 --cluster.agency-endpoint tcp://arango-agency2:8529 --cluster.agency-endpoint tcp://arango-agency3:8529
+    
+ 
+ 
+  arango-coordinator1:
+    container_name: arango-coordinator1
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    ports:
+      - "7001:8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    depends_on:
+      - arango-server1
+      - arango-server2
+    command: arangod --server.authentication=false --server.endpoint tcp://0.0.0.0:8529 --cluster.my-address tcp://arango-coordinator1:8529 --cluster.my-local-info coord1 --cluster.my-role COORDINATOR --cluster.agency-endpoint tcp://arango-agency1:8529 --cluster.agency-endpoint tcp://arango-agency2:8529 --cluster.agency-endpoint tcp://arango-agency3:8529
+
+
+
+
+    
+    
+    
+    
+
+
