@@ -1,0 +1,19 @@
+version: '2.3'
+services:
+
+  ################################            ARANGO
+  arangodb:
+    image: arangodb:3.9.0
+    restart: unless-stopped
+    logging:
+      driver: none
+    ports:
+      - '8530:8529'
+    environment:
+      - ARANGO_NO_AUTH=1
+    volumes:
+      - arangodb_data_container:/var/lib/arangodb3
+      - arangodb_apps_data_container:/var/lib/arangodb3-apps     
+volumes:
+  arangodb_data_container:
+  arangodb_apps_data_container: 
